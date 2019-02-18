@@ -1,5 +1,5 @@
 // 游戏作战区
-var local = function () {
+var local = function (socket) {
   // 游戏对象
   var game;
   // 时间间隔
@@ -15,14 +15,23 @@ var local = function () {
     document.onkeydown=function(e){
       if(e.keyCode==38){ //up
         game.rotate();
+        socket.emit('rotate')
       }else if(e.keyCode==39){ //right
         game.right();
+        socket.emit('right')
+
       }else if(e.keyCode==40){ //down
         game.down();
+        socket.emit('down')
+
       }else if(e.keyCode==37){ //left
         game.left();
+        socket.emit('left')
+
       }else if(e.keyCode==32){ //space
         game.fall();
+        socket.emit('fall')
+
       }
     }
   }
@@ -31,17 +40,24 @@ var local = function () {
     timeFunc();
     if(!game.down()){
       game.fixed();
+      socket.emit('fixed')
       var line=game.checkClear();
       if(line){
         game.addScore(line)
+        socket.emit('line',line)
       }
       var gameOver=game.chcekOver();
       if(gameOver){
         game.gameover(false);
         stop()
       }else{
-        game.performNext(generateType(),generateDir())
+        var t=generateType()
+        var d=generateDir()
+        game.performNext(t,d);
+        socket.emit('next',{type:t,dir:d})
       }
+    }else{
+      socket.emit('down');
     }
   }
   // 随机生成干扰行
@@ -87,9 +103,15 @@ var local = function () {
       resultDiv:document.getElementById('local_gameover')
     }
     game = new Game();
-    game.init(doms,generateType(),generateDir())
+    var type=generateType()
+    var dir = generateDir()
+    game.init(doms,type,dir)
+    socket.emit("init",{type:type,dir:dir})
     bindKeyEvent();
-    game.performNext(generateType(),generateDir())
+    var t=generateType()
+    var d=generateDir()
+    game.performNext(t,d);
+    socket.emit('next',{type:t,dir:d})
     timer=setInterval(move,INTERVAL);
   }
   // 结束
@@ -100,6 +122,9 @@ var local = function () {
       document.onkeydown=null
     }
   }
-  // 导出API
-  this.start = start
+
+  socket.on('start',function(){
+    document.getElementById('waiting').innerHTML='';
+    start();
+  })
 }
