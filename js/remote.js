@@ -41,8 +41,17 @@ var Remote = function (socket) {
       game.addScore(data)
     })
 
+    socket.on('time',function(data){
+      game.setTime(data)
+    })
 
+    socket.on('lose',function(data){
+      game.gameover(false)
+    })
 
+    socket.on('addTailLines',function(data){
+      game.addTailLines(data)
+    })
   }
   // 开始
   var start = function (type, dir) {
